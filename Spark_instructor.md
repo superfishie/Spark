@@ -46,7 +46,7 @@ $f(x) = x^2 + (x+1)^2 + ... + (x+49)^2$ , 如果要求x在0 ~ $10^7$范围内的
 其中, `/home/hadoop/spark/bin/spark-submit`是公司提交spark文件的目录,公司每一台机器的提交文件目录都是一致的; `spark://liuqiang-pc:7077`是主节点地址,spark程序需要提交到主节点运行.
 
 程序运行截图如下:
-![avatar](http://pjpf9017m.bkt.clouddn.com/first_test.png)
+![avatar](https://github.com/superfishie/img_host/blob/master/Spark_first_test.png?raw=true)
 上述程序如果可以正常运行,说明本机的spark已可以正常使用了.
 
 ## 二. 代码结构
@@ -271,9 +271,9 @@ class RunSpark(object):
 
 
 if __name__ == '__main__':
-    
+
     proj_path = os.path.split(os.path.abspath(os.path.realpath(__file__)))[0] + "/../../../../"
-    
+
     # conf_path是配置文件的路径
     cfg = {
         "conf_path": os.path.abspath(os.path.join(proj_path, "configure/db_conf/mongo_211_ZMingStopLose.conf")),
@@ -347,7 +347,7 @@ class FactorScore:
         for record in records:
             self.data_dict[record['_id']] = record['value']
         return self.data_dict
-    
+
     # 任务处理函数
     def get_one_score_sheet(self, param_dict):
         pass
@@ -374,7 +374,7 @@ class RunSpark(object):
 
         DC_score = FactorScore(self.target_collection)
         DC_score.get_all_corrs()  # 获得数据库中所有的相关系数数据
-        DC_score.get_all_corrs_name()  # 获得因子名称列表 
+        DC_score.get_all_corrs_name()  # 获得因子名称列表
 
         tg = TaskGenerator(self.cfg)
         param_list = tg.generate_param_list()
@@ -396,11 +396,11 @@ class RunSpark(object):
 将数据库中的数据一次全部读出,存入内存,再在RunSpark里分发给slave机器,这种方法适用于数据不太大的情况.
 ### 2.4 运行Spark
 1.打开终端,进入项目目录 OR 进入项目目录再右键打开终端.
-![avatar](http://pjpf9017m.bkt.clouddn.com/open_t.png)      
+![avatar](https://github.com/superfishie/img_host/blob/master/Spark_open_terminator.png?raw=true)      
 2.Ctrl+A 将项目目录下的文件全部打包成.zip文件,注意不是将项目文件夹打包而是将项目文件夹下的文件夹打包
-![avatar](http://pjpf9017m.bkt.clouddn.com/zip.png)      
+![avatar](https://github.com/superfishie/img_host/blob/master/Spark_zip_files.png?raw=true)      
 3.在终端中输入: ```/home/hadoop/spark/bin/spark-submit --master spark://liuqiang-pc:7077 --py-files ZM_Lab_Alpha_System.zip development/alpha_production/dp/run_spark_dp6.py```
-![avatar](http://pjpf9017m.bkt.clouddn.com/run.png)  
+![avatar](https://github.com/superfishie/img_host/blob/master/Spark_run.png?raw=true)  
 ```/home/hadoop/spark/bin/spark-submit```: 运行spark程序的入口    
 ```spark://liuqiang-pc:7077```: 集群主节点     
 ```--py-files ZM_Lab_Alpha_System.zip``` : spark程序所有依赖的文件打包
@@ -417,30 +417,161 @@ spark运行程序入口  --master spark集群主节点 --spark相关文件.zip s
 进入主节点
 ssh hadoop@192.168.1.139
 关闭服务
-hadoop@liuqiang-pc:~/spark/sbin$ ./stop-all.sh 
+hadoop@liuqiang-pc:~/spark/sbin$ ./stop-all.sh
 启动服务
-hadoop@liuqiang-pc:~/spark/sbin$ ./start-all.sh 
-```
-### 3.2 关于slave路径问题
-对 slave 机器来说，都是在形如：/home/hadoop/spark/work/app-20181211182511-0001/3 的临时路径运行，此位置即为工作目录。(关于这一点，大家可以从自己终端的打印信息中看到他的创建和销毁过程)
-同样的，打包后的zip文件也会被放置在这个路径下。
-```
-print(os.path.abspath(os.path.realpath('.')))
-print(os.getcwd())
-print(os.path.abspath(os.path.realpath(__file__)))
-
-"""
-/home/hadoop/spark/work/app-20181211182511-0001/3
-/home/hadoop/spark/work/app-20181211182511-0001/3
-/home/hadoop/spark/work/app-20181211182511-0001/3/ZM_Lab_Alpha_System.zip/development/alpha_production/ap_util/db_operation.py
-"""
+hadoop@liuqiang-pc:~/spark/sbin$ ./start-all.sh
 ```
 
-### 3.3 关于依赖的问题
+### 3.2 关于依赖的问题
+用spark调试程序时,往往会遇到可以单机运行但不能spark运行的情况. 这有可能是slave机没有找到相关的依赖.
 
 1. 使用者需要理解的是，使用spark运行Python代码时，不论这行代码是运行在master节点或是slave节点，他寻找一切依赖的自定义模块时，都是从zip中寻找。
 
-2. 配置文件不能直接被找到,需要在命令行中用“--py-files zip的路径” 与 “--files 配置文件的路径” ,或在代码中使用 sc.addFile() 和 sc.addPyFile() 添加到slave机,再使slave机手动调用函数读取配置文件.所以,如果不怕代码冗长可以直接把配置文件直接写进代码,以免去slave机找配置文件的麻烦.
+2. 在启动Spark时,如果需要添加依赖, “--py-files zip的路径” 与 “--files 配置文件的路径” 均可在代码中使用 sc.addFile() 和 sc.addPyFile() 替代.也可以看出py格式的文件和非py格式的文件在添加时的写法是不一样的.
+
+2. 若zip中存在需要导入的非py格式的配置文件,需要依照以下方法导入,否则会报错.因为py     
+外部配置文件不能直接被找到,需要在命令行中用 “--files 配置文件的路径” ,或在代码中使用 SparkContext.addFile()分发到到slave机,每台slave机再用SparkFiles.get(file_name)找到配置文件.
+E.g.
+如果需要在 slave 机器中读取数据库，推荐使用此种方法启动。
+    ```python
+    from pyspark import SparkFiles
+    file_conf = SparkFiles.get("mongo_211_ZMingStopLose.conf")
+    ```
 
 
- 
+**注意:不要在worker类中的__init__函数中初始化MongoClient对象,否则会出现如下错误:**
+```
+pickle.PicklingError: Could not serialize object: TypeError: can't pickle thread.lock objects
+```
+
+
+## 四. Spark运行流程:
+查看slave的日志可知slave的运行流程:  
+
+**1. 初始化本机(192.168.1.83)的spark:**
+* 连接主节点-- driver:192.168.1.122:42737;
+* 在本地分配内存366.3 MB
+* worker spark连接本地端口192.168.1.83:38429 并在driver(主节点上注册)
+* 在本地端口192.168.1.83:35521 开启spark服务并注册BlockMananger
+* slave获得3个任务
+```
+19/01/31 14:52:29 INFO TransportClientFactory: Successfully created connection to /192.168.1.122:42737 after 1 ms (0 ms spent in bootstraps)
+19/01/31 14:52:29 INFO DiskBlockManager: Created local directory at /tmp/spark-00ad7881-80c2-451f-9573-1e52478e74f5/executor-c6674c9e-c231-4e70-a739-2bf8cf5da17e/blockmgr-59405f39-1cf6-4c25-952c-e1084f780f34
+19/01/31 14:52:29 INFO MemoryStore: MemoryStore started with capacity 366.3 MB
+19/01/31 14:52:29 INFO CoarseGrainedExecutorBackend: Connecting to driver: spark://CoarseGrainedScheduler@192.168.1.122:42737
+19/01/31 14:52:29 INFO WorkerWatcher: Connecting to worker spark://Worker@192.168.1.83:38429
+19/01/31 14:52:29 INFO TransportClientFactory: Successfully created connection to /192.168.1.83:38429 after 1 ms (0 ms spent in bootstraps)
+19/01/31 14:52:29 INFO WorkerWatcher: Successfully connected to spark://Worker@192.168.1.83:38429
+19/01/31 14:52:29 INFO CoarseGrainedExecutorBackend: Successfully registered with driver
+19/01/31 14:52:29 INFO Executor: Starting executor ID 2 on host 192.168.1.83
+19/01/31 14:52:30 INFO Utils: Successfully started service 'org.apache.spark.network.netty.NettyBlockTransferService' on port 35521.
+19/01/31 14:52:30 INFO NettyBlockTransferService: Server created on 192.168.1.83:35521
+19/01/31 14:52:30 INFO BlockManager: Using org.apache.spark.storage.RandomBlockReplicationPolicy for block replication policy
+19/01/31 14:52:30 INFO BlockManagerMaster: Registering BlockManager BlockManagerId(2, 192.168.1.83, 35521, None)
+19/01/31 14:52:30 INFO BlockManagerMaster: Registered BlockManager BlockManagerId(2, 192.168.1.83, 35521, None)
+19/01/31 14:52:30 INFO BlockManager: Initialized BlockManager: BlockManagerId(2, 192.168.1.83, 35521, None)
+19/01/31 14:57:46 INFO CoarseGrainedExecutorBackend: Got assigned task 2
+19/01/31 14:57:46 INFO CoarseGrainedExecutorBackend: Got assigned task 10
+19/01/31 14:57:46 INFO CoarseGrainedExecutorBackend: Got assigned task 17
+19/01/31 14:57:46 INFO Executor: Running task 2.0 in stage 0.0 (TID 2)
+19/01/31 14:57:46 INFO Executor: Running task 10.0 in stage 0.0 (TID 10)
+19/01/31 14:57:46 INFO Executor: Running task 17.0 in stage 0.0 (TID 17)
+```
+
+**2.从主节点获取运行代码及其依赖,配置文件等**
+* 依次将.zip,.py, .conf等文件从主节点的files/目录下获取,缓存到本地,再拷贝到形如/home/hadoop/spark/work/app-20190131145228-0005/2/./的目录下
+```
+9/01/31 14:57:46 INFO Executor: Fetching spark://192.168.1.122:42737/files/ZM_Lab_Alpha_System.zip with timestamp 1548917548577
+19/01/31 14:57:46 INFO TransportClientFactory: Successfully created connection to /192.168.1.122:42737 after 3 ms (0 ms spent in bootstraps)
+19/01/31 14:57:46 INFO Utils: Fetching spark://192.168.1.122:42737/files/ZM_Lab_Alpha_System.zip to /tmp/spark-00ad7881-80c2-451f-9573-1e52478e74f5/executor-c6674c9e-c231-4e70-a739-2bf8cf5da17e/spark-336d0426-858a-49ad-a4db-90c678093461/fetchFileTemp1776261837924149178.tmp
+19/01/31 14:57:50 INFO Utils: Copying /tmp/spark-00ad7881-80c2-451f-9573-1e52478e74f5/executor-c6674c9e-c231-4e70-a739-2bf8cf5da17e/spark-336d0426-858a-49ad-a4db-90c678093461/-20204704431548917548577_cache to /home/hadoop/spark/work/app-20190131145228-0005/2/./ZM_Lab_Alpha_System.zip
+19/01/31 14:57:50 INFO Executor: Fetching spark://192.168.1.122:42737/files/spark_tuning.py with timestamp 1548917548564
+19/01/31 14:57:50 INFO Utils: Fetching spark://192.168.1.122:42737/files/spark_tuning.py to /tmp/spark-00ad7881-80c2-451f-9573-1e52478e74f5/executor-c6674c9e-c231-4e70-a739-2bf8cf5da17e/spark-336d0426-858a-49ad-a4db-90c678093461/fetchFileTemp3946925521355699257.tmp
+19/01/31 14:57:50 INFO Utils: Copying /tmp/spark-00ad7881-80c2-451f-9573-1e52478e74f5/executor-c6674c9e-c231-4e70-a739-2bf8cf5da17e/spark-336d0426-858a-49ad-a4db-90c678093461/-9296098361548917548564_cache to /home/hadoop/spark/work/app-20190131145228-0005/2/./spark_tuning.py
+19/01/31 14:57:50 INFO Executor: Fetching spark://192.168.1.122:42737/files/mongo_211_ZMingStopLose.conf with timestamp 1548917549017
+19/01/31 14:57:50 INFO Utils: Fetching spark://192.168.1.122:42737/files/mongo_211_ZMingStopLose.conf to /tmp/spark-00ad7881-80c2-451f-9573-1e52478e74f5/executor-c6674c9e-c231-4e70-a739-2bf8cf5da17e/spark-336d0426-858a-49ad-a4db-90c678093461/fetchFileTemp6305071164934492107.tmp
+19/01/31 14:57:50 INFO Utils: Copying /tmp/spark-00ad7881-80c2-451f-9573-1e52478e74f5/executor-c6674c9e-c231-4e70-a739-2bf8cf5da17e/spark-336d0426-858a-49ad-a4db-90c678093461/3143562401548917549017_cache to /home/hadoop/spark/work/app-20190131145228-0005/2/./mongo_211_ZMingStopLose.conf
+```
+**3. 从主节点和其他slave获得数据进行分布式计算**
+* 主节点将varible1和varible2打散,分发给各个slave
+* slave机又从各个slave机中得到varible1和varible2,共花费了118007ms
+```
+19/01/31 14:57:50 INFO TorrentBroadcast: Started reading broadcast variable 1
+19/01/31 14:57:50 INFO TransportClientFactory: Successfully created connection to /192.168.1.122:41227 after 2 ms (0 ms spent in bootstraps)
+19/01/31 14:57:50 INFO MemoryStore: Block broadcast_1_piece0 stored as bytes in memory (estimated size 2.7 KB, free 366.3 MB)
+19/01/31 14:57:50 INFO TorrentBroadcast: Reading broadcast variable 1 took 331 ms
+19/01/31 14:57:50 INFO MemoryStore: Block broadcast_1 stored as values in memory (estimated size 4.2 KB, free 366.3 MB)
+19/01/31 14:57:51 INFO TorrentBroadcast: Started reading broadcast variable 0
+19/01/31 14:57:53 INFO MemoryStore: Block broadcast_0_piece52 stored as bytes in memory (estimated size 4.0 MB, free 362.3 MB)
+19/01/31 14:57:58 INFO MemoryStore: Block broadcast_0_piece3 stored as bytes in memory (estimated size 4.0 MB, free 358.3 MB)
+19/01/31 14:58:01 INFO MemoryStore: Block broadcast_0_piece53 stored as bytes in memory (estimated size 4.0 MB, free 354.3 MB)
+19/01/31 14:58:03 INFO MemoryStore: Block broadcast_0_piece34 stored as bytes in memory (estimated size 4.0 MB, free 350.3 MB)
+19/01/31 14:58:03 INFO TransportClientFactory: Successfully created connection to /192.168.1.122:35713 after 4 ms (0 ms spent in bootstraps)
+19/01/31 14:58:29 INFO MemoryStore: Block broadcast_0_piece43 stored as bytes in memory (estimated size 4.0 MB, free 346.3 MB)
+19/01/31 14:58:32 INFO MemoryStore: Block broadcast_0_piece31 stored as bytes in memory (estimated size 4.0 MB, free 342.3 MB)
+19/01/31 14:58:35 INFO MemoryStore: Block broadcast_0_piece11 stored as bytes in memory (estimated size 4.0 MB, free 338.3 MB)
+19/01/31 14:58:37 INFO MemoryStore: Block broadcast_0_piece25 stored as bytes in memory (estimated size 4.0 MB, free 334.3 MB)
+19/01/31 14:58:40 INFO MemoryStore: Block broadcast_0_piece51 stored as bytes in memory (estimated size 4.0 MB, free 330.3 MB)
+19/01/31 14:58:43 INFO MemoryStore: Block broadcast_0_piece2 stored as bytes in memory (estimated size 4.0 MB, free 326.3 MB)
+19/01/31 14:58:46 INFO MemoryStore: Block broadcast_0_piece6 stored as bytes in memory (estimated size 4.0 MB, free 322.3 MB)
+19/01/31 14:58:46 INFO TransportClientFactory: Successfully created connection to /192.168.1.115:40271 after 1 ms (0 ms spent in bootstraps)
+19/01/31 14:58:46 INFO MemoryStore: Block broadcast_0_piece57 stored as bytes in memory (estimated size 4.0 MB, free 318.3 MB)
+19/01/31 14:58:46 INFO TransportClientFactory: Successfully created connection to /192.168.1.85:34706 after 1 ms (0 ms spent in bootstraps)
+19/01/31 14:58:47 INFO MemoryStore: Block broadcast_0_piece59 stored as bytes in memory (estimated size 4.0 MB, free 314.3 MB)
+19/01/31 14:58:49 INFO MemoryStore: Block broadcast_0_piece36 stored as bytes in memory (estimated size 4.0 MB, free 310.3 MB)
+19/01/31 14:58:52 INFO MemoryStore: Block broadcast_0_piece4 stored as bytes in memory (estimated size 4.0 MB, free 306.3 MB)
+19/01/31 14:58:53 INFO MemoryStore: Block broadcast_0_piece21 stored as bytes in memory (estimated size 4.0 MB, free 302.3 MB)
+19/01/31 14:58:56 INFO MemoryStore: Block broadcast_0_piece38 stored as bytes in memory (estimated size 4.0 MB, free 298.3 MB)
+19/01/31 14:58:56 INFO TransportClientFactory: Successfully created connection to /192.168.1.15:33263 after 2 ms (0 ms spent in bootstraps)
+19/01/31 14:58:56 INFO MemoryStore: Block broadcast_0_piece23 stored as bytes in memory (estimated size 4.0 MB, free 294.3 MB)
+19/01/31 14:58:59 INFO MemoryStore: Block broadcast_0_piece48 stored as bytes in memory (estimated size 4.0 MB, free 290.3 MB)
+19/01/31 14:59:02 INFO MemoryStore: Block broadcast_0_piece60 stored as bytes in memory (estimated size 4.0 MB, free 286.3 MB)
+19/01/31 14:59:04 INFO MemoryStore: Block broadcast_0_piece13 stored as bytes in memory (estimated size 4.0 MB, free 282.3 MB)
+19/01/31 14:59:05 INFO MemoryStore: Block broadcast_0_piece16 stored as bytes in memory (estimated size 4.0 MB, free 278.3 MB)
+19/01/31 14:59:06 INFO MemoryStore: Block broadcast_0_piece45 stored as bytes in memory (estimated size 4.0 MB, free 274.3 MB)
+19/01/31 14:59:09 INFO MemoryStore: Block broadcast_0_piece0 stored as bytes in memory (estimated size 4.0 MB, free 270.3 MB)
+19/01/31 14:59:10 INFO TransportClientFactory: Successfully created connection to /192.168.1.16:40491 after 1 ms (0 ms spent in bootstraps)
+19/01/31 14:59:10 INFO MemoryStore: Block broadcast_0_piece26 stored as bytes in memory (estimated size 4.0 MB, free 266.3 MB)
+19/01/31 14:59:13 INFO MemoryStore: Block broadcast_0_piece44 stored as bytes in memory (estimated size 4.0 MB, free 262.3 MB)
+19/01/31 14:59:14 INFO MemoryStore: Block broadcast_0_piece40 stored as bytes in memory (estimated size 4.0 MB, free 258.3 MB)
+19/01/31 14:59:14 INFO MemoryStore: Block broadcast_0_piece32 stored as bytes in memory (estimated size 4.0 MB, free 254.3 MB)
+19/01/31 14:59:15 INFO MemoryStore: Block broadcast_0_piece19 stored as bytes in memory (estimated size 4.0 MB, free 250.3 MB)
+19/01/31 14:59:16 INFO MemoryStore: Block broadcast_0_piece35 stored as bytes in memory (estimated size 4.0 MB, free 246.3 MB)
+19/01/31 14:59:16 INFO MemoryStore: Block broadcast_0_piece17 stored as bytes in memory (estimated size 4.0 MB, free 242.3 MB)
+19/01/31 14:59:18 INFO MemoryStore: Block broadcast_0_piece24 stored as bytes in memory (estimated size 4.0 MB, free 238.3 MB)
+19/01/31 14:59:20 INFO MemoryStore: Block broadcast_0_piece50 stored as bytes in memory (estimated size 4.0 MB, free 234.3 MB)
+19/01/31 14:59:21 INFO MemoryStore: Block broadcast_0_piece55 stored as bytes in memory (estimated size 4.0 MB, free 230.3 MB)
+19/01/31 14:59:21 INFO MemoryStore: Block broadcast_0_piece9 stored as bytes in memory (estimated size 4.0 MB, free 226.3 MB)
+19/01/31 14:59:22 INFO MemoryStore: Block broadcast_0_piece5 stored as bytes in memory (estimated size 4.0 MB, free 222.3 MB)
+19/01/31 14:59:23 INFO MemoryStore: Block broadcast_0_piece33 stored as bytes in memory (estimated size 4.0 MB, free 218.3 MB)
+19/01/31 14:59:25 INFO MemoryStore: Block broadcast_0_piece61 stored as bytes in memory (estimated size 4.0 MB, free 214.3 MB)
+19/01/31 14:59:26 INFO MemoryStore: Block broadcast_0_piece22 stored as bytes in memory (estimated size 4.0 MB, free 210.3 MB)
+19/01/31 14:59:28 INFO MemoryStore: Block broadcast_0_piece27 stored as bytes in memory (estimated size 4.0 MB, free 206.3 MB)
+19/01/31 14:59:29 INFO MemoryStore: Block broadcast_0_piece58 stored as bytes in memory (estimated size 4.0 MB, free 202.3 MB)
+19/01/31 14:59:30 INFO MemoryStore: Block broadcast_0_piece10 stored as bytes in memory (estimated size 4.0 MB, free 198.3 MB)
+19/01/31 14:59:31 INFO MemoryStore: Block broadcast_0_piece49 stored as bytes in memory (estimated size 4.0 MB, free 194.3 MB)
+19/01/31 14:59:31 INFO TransportClientFactory: Successfully created connection to /192.168.1.53:42657 after 11 ms (0 ms spent in bootstraps)
+19/01/31 14:59:32 INFO MemoryStore: Block broadcast_0_piece30 stored as bytes in memory (estimated size 4.0 MB, free 190.3 MB)
+19/01/31 14:59:33 INFO MemoryStore: Block broadcast_0_piece7 stored as bytes in memory (estimated size 4.0 MB, free 186.3 MB)
+19/01/31 14:59:33 INFO MemoryStore: Block broadcast_0_piece29 stored as bytes in memory (estimated size 4.0 MB, free 182.3 MB)
+19/01/31 14:59:33 INFO TransportClientFactory: Successfully created connection to /192.168.1.143:36029 after 3 ms (0 ms spent in bootstraps)
+19/01/31 14:59:33 INFO MemoryStore: Block broadcast_0_piece41 stored as bytes in memory (estimated size 4.0 MB, free 178.3 MB)
+19/01/31 14:59:34 INFO MemoryStore: Block broadcast_0_piece42 stored as bytes in memory (estimated size 4.0 MB, free 174.3 MB)
+19/01/31 14:59:36 INFO MemoryStore: Block broadcast_0_piece14 stored as bytes in memory (estimated size 4.0 MB, free 170.3 MB)
+19/01/31 14:59:39 INFO MemoryStore: Block broadcast_0_piece28 stored as bytes in memory (estimated size 4.0 MB, free 166.3 MB)
+19/01/31 14:59:39 INFO MemoryStore: Block broadcast_0_piece39 stored as bytes in memory (estimated size 4.0 MB, free 162.3 MB)
+19/01/31 14:59:41 INFO MemoryStore: Block broadcast_0_piece37 stored as bytes in memory (estimated size 4.0 MB, free 158.3 MB)
+19/01/31 14:59:42 INFO MemoryStore: Block broadcast_0_piece1 stored as bytes in memory (estimated size 4.0 MB, free 154.3 MB)
+19/01/31 14:59:43 INFO MemoryStore: Block broadcast_0_piece15 stored as bytes in memory (estimated size 4.0 MB, free 150.3 MB)
+19/01/31 14:59:43 INFO MemoryStore: Block broadcast_0_piece20 stored as bytes in memory (estimated size 4.0 MB, free 146.3 MB)
+19/01/31 14:59:44 INFO MemoryStore: Block broadcast_0_piece18 stored as bytes in memory (estimated size 4.0 MB, free 142.3 MB)
+19/01/31 14:59:44 INFO MemoryStore: Block broadcast_0_piece8 stored as bytes in memory (estimated size 4.0 MB, free 138.3 MB)
+19/01/31 14:59:45 INFO MemoryStore: Block broadcast_0_piece46 stored as bytes in memory (estimated size 4.0 MB, free 134.3 MB)
+19/01/31 14:59:47 INFO MemoryStore: Block broadcast_0_piece12 stored as bytes in memory (estimated size 4.0 MB, free 130.3 MB)
+19/01/31 14:59:48 INFO MemoryStore: Block broadcast_0_piece47 stored as bytes in memory (estimated size 4.0 MB, free 126.3 MB)
+19/01/31 14:59:48 INFO MemoryStore: Block broadcast_0_piece62 stored as bytes in memory (estimated size 1159.9 KB, free 125.2 MB)
+19/01/31 14:59:48 INFO MemoryStore: Block broadcast_0_piece54 stored as bytes in memory (estimated size 4.0 MB, free 121.2 MB)
+19/01/31 14:59:49 INFO MemoryStore: Block broadcast_0_piece56 stored as bytes in memory (estimated size 4.0 MB, free 117.2 MB)
+19/01/31 14:59:49 INFO TorrentBroadcast: Reading broadcast variable 0 took 118007 ms
+19/01/31 14:59:50 INFO MemoryStore: Block broadcast_0 stored as values in memory (estimated size 416.0 B, free 117.2 MB)
+```
